@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  annotations:
+    dev.okteto.com/generate-host: "true"
+  name: "{{ include "chart.fullname" . }}"
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: "Prefix"
+        backend:
+          service:
+            name: "{{ include "chart.fullname" . }}"
+            port: 
+              name: http

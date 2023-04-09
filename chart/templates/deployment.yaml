@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: "{{ include "chart.fullname" . }}"
+  labels:
+    app: "{{ include "chart.fullname" . }}"
+    component: api
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: "{{ include "chart.fullname" . }}"
+  template:
+    metadata:
+      labels:
+        app: "{{ include "chart.fullname" . }}"
+    spec:
+      containers:
+      - name: my-container
+        image: "{{ .Values.image }}"
+        ports:
+        - name: http
+          containerPort: 8080
+        volumeMounts:
+        - name: token-volume
+          mountPath: /var/run/secrets/tokens
+          readOnly: true
+      volumes:
+      - name: token-volume
+        projected:
+          sources:
+          - serviceAccountToken:
+              path: token
+              expirationSeconds: 7200
+              audience: "{{ .Values.oidc.audience }}"

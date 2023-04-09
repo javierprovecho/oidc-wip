@@ -1,0 +1,6 @@
+replicaCount: 2
+
+image: okteto.dev/api
+
+oidc:
+  audience: test
