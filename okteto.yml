@@ -1,0 +1,41 @@
+build:
+  api-cloudrun:
+    image: gcr.io/dotted-cat-382912/api
+    context: src
+    target: cloudrun
+  api-dev:
+    image: okteto.dev/api
+    context: src
+    target: build
+  api:
+    image: okteto.dev/api
+    context: src
+    
+deploy:
+- echo ${OKTETO_BUILD_API_CLOUDRUN_IMAGE}
+- name: Cloud Run deployment
+  command: gcloud run deploy ${OKTETO_NAME} --image ${OKTETO_BUILD_API_CLOUDRUN_IMAGE} --allow-unauthenticated
+- name: Cloud Run URL fetch
+  command: echo "OKTETO_EXTERNAL_GCP_ENDPOINTS_CLOUDRUN_URL=$(gcloud run services describe ${OKTETO_NAME} --format 'value(status.url)')/ping" >> ${OKTETO_ENV}
+- echo ${OKTETO_BUILD_API_IMAGE}
+- name: Helm Chart deployment
+  command: helm upgrade --install ${OKTETO_NAME} chart/ --set image=${OKTETO_BUILD_API_IMAGE}
+
+external:
+  gcp:
+    notes: docs/README.md
+    icon: function
+    endpoints:
+    - name: cloudrun
+
+dev:
+  api:
+    image: ${OKTETO_BUILD_API_DEV_IMAGE}
+    command: bash
+    selector:
+      component: api
+    sync:
+      - ./src:/go/src/app
+    forward:
+      - 2350:2345
+      - 8080:8080
