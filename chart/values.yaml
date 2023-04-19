@@ -4,3 +4,6 @@ image: okteto.dev/api
 
 oidc:
   audience: test
+
+serviceAccount:
+  annotations: {}

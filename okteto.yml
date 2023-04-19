@@ -4,7 +4,7 @@ build:
     context: src
     target: cloudrun
   api-dev:
-    image: okteto.dev/api
+    image: okteto.dev/api-dev
     context: src
     target: build
   api:
@@ -12,14 +12,23 @@ build:
     context: src
     
 deploy:
-- echo ${OKTETO_BUILD_API_CLOUDRUN_IMAGE}
 - name: Cloud Run deployment
-  command: gcloud run deploy ${OKTETO_NAME} --image ${OKTETO_BUILD_API_CLOUDRUN_IMAGE} --allow-unauthenticated
+  command: >
+    gcloud run deploy ${OKTETO_NAME}
+    --image ${OKTETO_BUILD_API_CLOUDRUN_IMAGE}
+    --allow-unauthenticated
+    --set-env-vars=ISSUER_URI=$ISSUER_URI,AUDIENCE=$AUDIENCE
 - name: Cloud Run URL fetch
-  command: echo "OKTETO_EXTERNAL_GCP_ENDPOINTS_CLOUDRUN_URL=$(gcloud run services describe ${OKTETO_NAME} --format 'value(status.url)')/ping" >> ${OKTETO_ENV}
-- echo ${OKTETO_BUILD_API_IMAGE}
+  command: >
+    echo "OKTETO_EXTERNAL_GCP_ENDPOINTS_CLOUDRUN_URL=$(gcloud run services describe ${OKTETO_NAME} --format 'value(status.url)')/ping"
+    >> ${OKTETO_ENV}
 - name: Helm Chart deployment
-  command: helm upgrade --install ${OKTETO_NAME} chart/ --set image=${OKTETO_BUILD_API_IMAGE}
+  command: >
+    helm upgrade
+    --install
+    ${OKTETO_NAME}
+    chart/
+    --set image=${OKTETO_BUILD_API_IMAGE}
 
 external:
   gcp:
@@ -31,11 +40,10 @@ external:
 dev:
   api:
     image: ${OKTETO_BUILD_API_DEV_IMAGE}
-    command: bash
     selector:
       component: api
     sync:
       - ./src:/go/src/app
     forward:
-      - 2350:2345
+      - 2345:2345
       - 8080:8080
