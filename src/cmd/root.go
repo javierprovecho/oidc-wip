@@ -6,6 +6,10 @@ import (
 
 var (
 	rootCmd = &cobra.Command{
+		CompletionOptions: cobra.CompletionOptions{
+			DisableDefaultCmd: true,
+		},
+
 		Use: "oidc-wip",
 	}
 )
@@ -16,5 +20,8 @@ func Execute() error {
 }
 
 func init() {
-	rootCmd.PersistentFlags().StringP("author", "a", "YOUR NAME", "author name for copyright attribution")
+	rootCmd.SetHelpCommand(&cobra.Command{
+		Use:    "no-help",
+		Hidden: true,
+	})
 }

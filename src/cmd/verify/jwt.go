@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/auth0/go-jwt-middleware/v2/validator"
 	"github.com/javierprovecho/oidc-wip/src/pkg/parse"
 	"github.com/javierprovecho/oidc-wip/src/pkg/verify"
 
@@ -24,30 +25,37 @@ var jwtCmd = &cobra.Command{
 			content, _ = os.ReadFile(filename)
 		}
 
+		var namespace, serviceAccount, pod string
+
 		if len(args) == 1 {
 			issuer = parse.GetIssuerFromUri(args[0])
+			namespace, serviceAccount, pod = parse.GetSubFromURI(args[0])
 		}
 		if issuerFromEnv := os.Getenv("ISSUER_URI"); issuerFromEnv != "" {
 			issuer = parse.GetIssuerFromUri(issuerFromEnv)
+			namespace, serviceAccount, pod = parse.GetSubFromURI(issuerFromEnv)
 		}
 		if audienceFromEnv := os.Getenv("AUDIENCE"); audienceFromEnv != "" {
 			audience = audienceFromEnv
 		}
 
-		fmt.Println(parse.GetIssuer(string(content)))
+		fmt.Println(parse.GetIssuerFromToken(string(content)))
+
+		var claims validator.RegisteredClaims
+		var isIssuerAndAudienceVerified bool
 
 		if issuer != "" {
-			claims, isVerified := verify.VerifyTokenWithIssuer(issuer, audience, string(content))
-			marshalledJson, _ := json.MarshalIndent(claims, "", "    ")
-			fmt.Fprint(os.Stdout, marshalledJson)
-			fmt.Fprintf(os.Stderr, "verified: %t", isVerified)
+			claims, isIssuerAndAudienceVerified = verify.VerifyTokenWithIssuer(string(content), issuer, audience)
 		} else {
-			claims, isVerified := verify.VerifyToken(audience, string(content))
-			marshalledJson, _ := json.MarshalIndent(claims, "", "    ")
-			fmt.Fprint(os.Stdout, marshalledJson)
-			fmt.Fprintf(os.Stderr, "verified: %t", isVerified)
-
+			claims, isIssuerAndAudienceVerified = verify.VerifyToken(string(content), audience)
 		}
+
+		isSubVerified := verify.VerifyTokenWithSub(string(content), namespace, serviceAccount, pod)
+
+		marshalledJson, _ := json.MarshalIndent(claims, "", "    ")
+		fmt.Fprintln(os.Stdout, string(marshalledJson))
+		fmt.Fprintf(os.Stderr, "verified issuer and audience: %t\n", isIssuerAndAudienceVerified)
+		fmt.Fprintf(os.Stderr, "verified sub: %t\n", isSubVerified)
 
 	},
 }

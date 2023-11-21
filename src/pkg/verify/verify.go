@@ -12,17 +12,16 @@ import (
 )
 
 func VerifyToken(audience, token string) (validator.RegisteredClaims, bool) {
-	issuer, err := parse.GetIssuer(token)
+	issuer, err := parse.GetIssuerFromToken(token)
 	if err != nil {
 		log.Print(err)
 		return validator.RegisteredClaims{}, false
 	}
 
-	return VerifyTokenWithIssuer(issuer, audience, token)
+	return VerifyTokenWithIssuer(token, issuer, audience)
 }
 
-func VerifyTokenWithIssuer(issuer, audience, token string) (validator.RegisteredClaims, bool) {
-
+func VerifyTokenWithIssuer(token, issuer, audience string) (validator.RegisteredClaims, bool) {
 	issuerURL, err := url.Parse(issuer)
 	if err != nil {
 		log.Fatalf("failed to parse the issuer url: %v", err)
@@ -48,4 +47,22 @@ func VerifyTokenWithIssuer(issuer, audience, token string) (validator.Registered
 	}
 
 	return claims.(*validator.ValidatedClaims).RegisteredClaims, true
+}
+
+func VerifyTokenWithSub(token, namespace, serviceAccount, pod string) bool {
+	tokenNamespace, tokenServiceAccount, tokenPod, _ := parse.GetK8SSub(token)
+
+	if namespace != "" && namespace != tokenNamespace {
+		return false
+	}
+
+	if serviceAccount != "" && serviceAccount != tokenServiceAccount {
+		return false
+	}
+
+	if pod != "" && pod != tokenPod {
+		return false
+	}
+
+	return true
 }

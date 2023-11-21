@@ -9,7 +9,7 @@ import (
 	"github.com/javierprovecho/oidc-wip/src/pkg/verify"
 )
 
-func Server(issuer, audience string) error {
+func Server(issuer, audience, namespace, serviceAccount, pod string) error {
 	gin.SetMode(gin.ReleaseMode)
 
 	r := gin.Default()
@@ -34,15 +34,22 @@ func Server(issuer, audience string) error {
 		}
 
 		if issuer == "" {
-			issuer, _ = parse.GetIssuer(token[1])
+			issuer, _ = parse.GetIssuerFromToken(token[1])
 		}
 
-		if claims, ok := verify.VerifyTokenWithIssuer(issuer, audience, token[1]); ok {
-			c.JSON(http.StatusOK, gin.H{"status": http.StatusOK, "message": "authorized", "claims": claims})
+		claims, ok := verify.VerifyTokenWithIssuer(token[1], issuer, audience)
+
+		if !ok {
+			c.JSON(http.StatusUnauthorized, gin.H{"status": http.StatusUnauthorized, "message": "missing token"})
 			return
 		}
 
-		c.JSON(http.StatusUnauthorized, gin.H{"status": http.StatusUnauthorized, "message": "missing token"})
+		if !verify.VerifyTokenWithSub(token[1], namespace, serviceAccount, pod) {
+			c.JSON(http.StatusUnauthorized, gin.H{"status": http.StatusUnauthorized, "message": "missing token"})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"status": http.StatusOK, "message": "authorized", "claims": claims})
 
 	})
 

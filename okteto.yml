@@ -17,7 +17,7 @@ deploy:
     gcloud run deploy ${OKTETO_NAME}
     --image ${OKTETO_BUILD_API_CLOUDRUN_IMAGE}
     --allow-unauthenticated
-    --set-env-vars=ISSUER_URI=$ISSUER_URI,AUDIENCE=$AUDIENCE
+    --set-env-vars="ISSUER_URI=${ISSUER_URI}?ns=${OKTETO_NAMESPACE},AUDIENCE=$AUDIENCE"
 - name: Cloud Run URL fetch
   command: >
     echo "OKTETO_EXTERNAL_GCP_ENDPOINTS_CLOUDRUN_URL=$(gcloud run services describe ${OKTETO_NAME} --format 'value(status.url)')/ping"

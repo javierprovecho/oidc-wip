@@ -6,7 +6,7 @@ import (
 	"gopkg.in/square/go-jose.v2/jwt"
 )
 
-func GetIssuer(token string) (string, error) {
+func GetIssuerFromToken(token string) (string, error) {
 	jwtToken, err := jwt.ParseSigned(token)
 	if err != nil {
 		return "", err
