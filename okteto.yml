@@ -29,6 +29,8 @@ deploy:
     ${OKTETO_NAME}
     chart/
     --set image=${OKTETO_BUILD_API_IMAGE}
+    --set aws.roleArn=${ROLE_ARN}
+    --set oidc.verifyServer=${OKTETO_EXTERNAL_GCP_ENDPOINTS_CLOUDRUN_URL}
 
 external:
   gcp:

@@ -4,6 +4,11 @@ image: okteto.dev/api
 
 oidc:
   audience: test
+  verifyServer:
 
 serviceAccount:
   annotations: {}
+
+aws:
+  roleArn:
+  audience: aws

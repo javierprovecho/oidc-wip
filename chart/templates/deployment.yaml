@@ -18,6 +18,13 @@ spec:
       containers:
       - name: my-container
         image: "{{ .Values.image }}"
+        env:
+          - name: AWS_ROLE_ARN
+            value: {{ .Values.aws.roleArn | quote }}
+          - name: AWS_WEB_IDENTITY_TOKEN_FILE
+            value: /var/run/secrets/tokens/aws
+          - name: VERIFY_SERVER
+            value: {{ .Values.oidc.verifyServer | quote }}
         ports:
         - name: http
           containerPort: 8080
@@ -33,3 +40,7 @@ spec:
               path: token
               expirationSeconds: 7200
               audience: "{{ .Values.oidc.audience }}"
+          - serviceAccountToken:
+              path: aws
+              expirationSeconds: 7200
+              audience: "{{ .Values.aws.audience }}"
